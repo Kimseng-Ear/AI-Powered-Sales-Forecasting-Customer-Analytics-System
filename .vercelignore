@@ -1,0 +1,16 @@
+# Build and training scripts
+preprocess.py
+train_models.py
+Procfile
+Customer-Purchase-History.xlsx
+
+# Local environment
+.venv
+venv
+env
+__pycache__
+.git
+
+# Docs
+README.md
+docs/
