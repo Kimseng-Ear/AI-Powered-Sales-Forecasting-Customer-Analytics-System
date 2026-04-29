@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <title>ML Predictions — SalesForecastAI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body id="predictionPage">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/"><img src="/logo.png" alt="SalesForecastAI Logo" class="navbar-logo">SalesForecast<span style="color:var(--primary)">AI</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house me-1"></i>Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/prediction"><i class="bi bi-cpu me-1"></i>Predict</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="section-header mb-4">
+    <h1 class="fw-800 mb-1">ML Prediction Engine</h1>
+    <div class="section-divider"></div>
+    <p class="text-muted-custom mt-2">Predict sales revenue and product demand with clear, easy-to-read insights.</p>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs-custom nav-tabs mb-4">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabSalesPred">Sales Prediction</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabDemandPred">Demand Forecast</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabModelInfo">Model Info</a></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- ── Sales Prediction Tab ─────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tabSalesPred">
+      <div class="row g-4">
+        <!-- Form -->
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="card-title">
+              <span class="chart-icon"><i class="bi bi-input-cursor-text"></i></span>
+              Transaction Details
+            </div>
+            <form id="predictionForm" novalidate>
+              <div class="row g-3">
+
+                <!-- Product -->
+                <div class="col-12">
+                  <label class="form-label-custom">Product</label>
+                  <select id="product" name="product" class="form-control-dark w-100" required>
+                    <option value="">— Select Product —</option>
+                    {% for p in products %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Category -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Category</label>
+                  <select id="category" name="category" class="form-control-dark w-100" required>
+                    <option value="">— Select Category —</option>
+                    {% for c in categories %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Payment Method</label>
+                  <select id="paymentMethod" name="paymentMethod" class="form-control-dark w-100">
+                    {% for pm in payments %}
+                    <option value="{{ pm }}">{{ pm }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Quantity -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Quantity</label>
+                  <input type="number" id="qty" name="qty" class="form-control-dark w-100"
+                         value="1" min="1" step="1" required>
+                </div>
+
+                <!-- Unit Price -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Unit Price ($)</label>
+                  <input type="number" id="unitPrice" name="unitPrice" class="form-control-dark w-100"
+                         value="29.99" min="0.01" step="0.01" required>
+                </div>
+
+                <!-- Average Order Value (auto) -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Avg Order Value ($) <small class="text-muted-custom">(auto)</small></label>
+                  <input type="number" id="avgOrder" name="avgOrder" class="form-control-dark w-100"
+                         value="29.99" step="0.01">
+                </div>
+
+                <!-- Review Rating -->
+                <div class="col-md-6">
+                  <label class="form-label-custom">Review Rating <small>(1–5)</small></label>
+                  <input type="number" id="rating" name="rating" class="form-control-dark w-100"
+                         value="4" min="1" max="5" step="0.1">
+                </div>
+
+                <!-- Month -->
+                <div class="col-md-4">
+                  <label class="form-label-custom">Month</label>
+                  <select id="month" name="month" class="form-control-dark w-100">
+                    {% for m, n in [(1,'January'),(2,'February'),(3,'March'),(4,'April'),
+                                    (5,'May'),(6,'June'),(7,'July'),(8,'August'),
+                                    (9,'September'),(10,'October'),(11,'November'),(12,'December')] %}
+                    <option value="{{ m }}">{{ n }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Year -->
+                <div class="col-md-4">
+                  <label class="form-label-custom">Year</label>
+                  <select id="year" name="year" class="form-control-dark w-100">
+                    {% for y in range(2024, 2028) %}
+                    <option value="{{ y }}" {{ 'selected' if y == 2025 else '' }}>{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Weekday -->
+                <div class="col-md-4">
+                  <label class="form-label-custom">Day of Week</label>
+                  <select id="weekday" name="weekday" class="form-control-dark w-100">
+                    {% for i, d in [(0,'Monday'),(1,'Tuesday'),(2,'Wednesday'),
+                                    (3,'Thursday'),(4,'Friday'),(5,'Saturday'),(6,'Sunday')] %}
+                    <option value="{{ i }}">{{ d }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Purchase Frequency -->
+                <div class="col-12">
+                  <label class="form-label-custom">Customer Purchase Frequency (total orders)</label>
+                  <input type="number" id="freq" name="freq" class="form-control-dark w-100"
+                         value="5" min="1" step="1">
+                </div>
+
+                <div class="col-12 mt-2">
+                  <button type="submit" class="btn btn-gradient-primary w-100 py-3">
+                    Predict Revenue
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="col-lg-6">
+          <!-- Placeholder -->
+          <div class="chart-card mb-4" id="predictionResultPlaceholder">
+            <div class="text-center py-5">
+              <p class="text-muted-custom mt-3 mb-0" style="font-size:1rem;line-height:1.7;">
+                Fill in transaction details and click <strong>Predict Revenue</strong> to see results.
+              </p>
+            </div>
+          </div>
+
+          <!-- Prediction Result -->
+          <div id="predictionResult" style="display:none;">
+            <div class="prediction-result mb-4">
+              <p class="text-muted-custom mb-2" style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;">
+                Predicted Revenue
+              </p>
+              <div class="result-value" id="predRevenue">$0</div>
+              <p class="result-label">Based on trained ML model</p>
+              <div class="mt-3">
+                <span id="predHighValue" class="badge badge-info badge-custom fs-6 p-2">–</span>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-shield"></i></span>
+                High-Value Probability
+              </div>
+              <div class="mb-2">
+                <div class="progress-dark">
+                  <div class="progress-bar-gradient" id="predProbBar" style="width:0%"></div>
+                </div>
+              </div>
+              <p class="text-muted-custom mb-0" id="predProbText" style="font-size:0.82rem;">–</p>
+            </div>
+          </div>
+
+          <!-- Insight Tips -->
+          <div class="chart-card mt-4">
+            <div class="card-title">
+              <span class="chart-icon"><i class="bi bi-lightbulb"></i></span>
+              Prediction Tips
+            </div>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2 text-muted-custom" style="font-size:0.875rem;">
+                <i class="bi bi-arrow-right-short text-primary-custom me-1"></i>
+                Higher purchase frequency → higher predicted revenue
+              </li>
+              <li class="mb-2 text-muted-custom" style="font-size:0.875rem;">
+                <i class="bi bi-arrow-right-short text-primary-custom me-1"></i>
+                Weekend sales tend to be lower on average
+              </li>
+              <li class="mb-2 text-muted-custom" style="font-size:0.875rem;">
+                <i class="bi bi-arrow-right-short text-primary-custom me-1"></i>
+                Q4 (Oct–Dec) typically shows highest revenue
+              </li>
+              <li class="text-muted-custom" style="font-size:0.875rem;">
+                <i class="bi bi-arrow-right-short text-primary-custom me-1"></i>
+                High rating customers show stronger LTV
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Demand Forecast Tab ──────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tabDemandPred">
+      <div class="row g-4">
+        <!-- Demand Form -->
+        <div class="col-lg-5">
+          <div class="chart-card">
+            <div class="card-title">
+              <span class="chart-icon"><i class="bi bi-box-seam"></i></span>
+              Product Demand Forecast
+            </div>
+            <form id="demandForm" novalidate>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label-custom">Product</label>
+                  <select id="demandProduct" name="demandProduct" class="form-control-dark w-100" required>
+                    <option value="">— Select Product —</option>
+                    {% for p in products %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-custom">Target Month</label>
+                  <select id="demandMonth" class="form-control-dark w-100">
+                    {% for m, n in [(1,'January'),(2,'February'),(3,'March'),(4,'April'),
+                                    (5,'May'),(6,'June'),(7,'July'),(8,'August'),
+                                    (9,'September'),(10,'October'),(11,'November'),(12,'December')] %}
+                    <option value="{{ m }}">{{ n }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label-custom">Target Year</label>
+                  <select id="demandYear" class="form-control-dark w-100">
+                    {% for y in range(2025, 2028) %}
+                    <option value="{{ y }}" {{ 'selected' if y == 2025 else '' }}>{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-gradient-secondary w-100 py-3">
+                    <i class="bi bi-box-seam me-2"></i>Forecast Demand
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Demand Results -->
+        <div class="col-lg-7">
+          <div id="demandResult" style="display:none;">
+            <div class="row g-3 mb-4">
+              <div class="col-6">
+                <div class="kpi-card kpi-primary text-center">
+                  <div class="kpi-label">Predicted Quantity</div>
+                  <div class="kpi-value" id="demandQty">–</div>
+                  <div class="kpi-change positive">units</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="kpi-card kpi-accent text-center">
+                  <div class="kpi-label">Predicted Revenue</div>
+                  <div class="kpi-value" id="demandRevenue">–</div>
+                  <div class="kpi-change positive">estimated</div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-bar-chart"></i></span>
+                Monthly Demand History
+              </div>
+              <div class="canvas-container">
+                <canvas id="demandHistoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div id="demandPlaceholder" class="chart-card">
+            <div class="text-center py-5">
+              <div style="font-size:4rem;opacity:0.3;">📦</div>
+              <p class="text-muted-custom mt-3 mb-0">Select a product and target month<br>to forecast demand</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Model Info Tab ─────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tabModelInfo">
+      <div class="row g-4">
+
+        <!-- Regression Models -->
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="card-title">
+              <span class="chart-icon"><i class="bi bi-table"></i></span>
+              Regression Model Comparison
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark-custom" id="regModelTable">
+                <thead><tr>
+                  <th>Model</th><th>MAE ($)</th><th>MSE</th><th>RMSE ($)</th><th>R² Score</th><th>Status</th>
+                </tr></thead>
+                <tbody>
+                  {% if model_results and model_results.regression %}
+                    {% for name, metrics in model_results.regression.items() %}
+                    <tr {{ 'style="background:rgba(108,99,255,0.1);"' if name == model_results.best_regression_model else '' }}>
+                      <td>
+                        {% if name == model_results.best_regression_model %}
+                          <i class="bi bi-trophy-fill text-warning me-1"></i>
+                        {% endif %}
+                        <strong>{{ name }}</strong>
+                      </td>
+                      <td>${{ '{:.2f}'.format(metrics.MAE) }}</td>
+                      <td>{{ '{:.2f}'.format(metrics.MSE) }}</td>
+                      <td>${{ '{:.2f}'.format(metrics.RMSE) }}</td>
+                      <td>
+                        {% set r2 = metrics.R2 %}
+                        {% if r2 >= 0.9 %}
+                          <span class="metric-pill metric-excellent">{{ '{:.4f}'.format(r2) }}</span>
+                        {% elif r2 >= 0.7 %}
+                          <span class="metric-pill metric-good">{{ '{:.4f}'.format(r2) }}</span>
+                        {% elif r2 >= 0.5 %}
+                          <span class="metric-pill metric-fair">{{ '{:.4f}'.format(r2) }}</span>
+                        {% else %}
+                          <span class="metric-pill metric-poor">{{ '{:.4f}'.format(r2) }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if name == model_results.best_regression_model %}
+                          <span class="badge-custom badge-primary">✅ Deployed</span>
+                        {% else %}
+                          <span class="badge-custom badge-info">Evaluated</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="6" class="text-center text-muted-custom py-4">
+                      Run <code>python train_models.py</code> to generate model metrics
+                    </td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classification Models -->
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="card-title">
+              <span class="chart-icon"><i class="bi bi-table"></i></span>
+              Classification Model Comparison (High-Value Customer)
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark-custom">
+                <thead><tr>
+                  <th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1 Score</th><th>Status</th>
+                </tr></thead>
+                <tbody>
+                  {% if model_results and model_results.classification %}
+                    {% for name, metrics in model_results.classification.items() %}
+                    <tr {{ 'style="background:rgba(67,184,156,0.1);"' if name == model_results.best_classification_model else '' }}>
+                      <td>
+                        {% if name == model_results.best_classification_model %}
+                          <i class="bi bi-trophy-fill text-warning me-1"></i>
+                        {% endif %}
+                        <strong>{{ name }}</strong>
+                      </td>
+                      <td>{{ '{:.4f}'.format(metrics.Accuracy) }}</td>
+                      <td>{{ '{:.4f}'.format(metrics.Precision) }}</td>
+                      <td>{{ '{:.4f}'.format(metrics.Recall) }}</td>
+                      <td>
+                        {% set f1 = metrics.F1 %}
+                        {% if f1 >= 0.9 %}
+                          <span class="metric-pill metric-excellent">{{ '{:.4f}'.format(f1) }}</span>
+                        {% elif f1 >= 0.7 %}
+                          <span class="metric-pill metric-good">{{ '{:.4f}'.format(f1) }}</span>
+                        {% else %}
+                          <span class="metric-pill metric-fair">{{ '{:.4f}'.format(f1) }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if name == model_results.best_classification_model %}
+                          <span class="badge-custom badge-success">✅ Deployed</span>
+                        {% else %}
+                          <span class="badge-custom badge-info">Evaluated</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="6" class="text-center text-muted-custom py-4">
+                      Run <code>python train_models.py</code> to generate model metrics
+                    </td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Model Charts -->
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="card-title"><span class="chart-icon"><i class="bi bi-stars"></i></span>Feature Importance</div>
+            <img src="/static/charts/feature_importance.png" alt="Feature Importance" class="chart-img">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="card-title"><span class="chart-icon"><i class="bi bi-graph-up"></i></span>Actual vs Predicted</div>
+            <img src="/static/charts/actual_vs_predicted.png" alt="Actual vs Predicted" class="chart-img">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="card-title"><span class="chart-icon"><i class="bi bi-bar-chart"></i></span>Regression Model Comparison</div>
+            <img src="/static/charts/model_comparison_regression.png" alt="Model Comparison" class="chart-img">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="card-title"><span class="chart-icon"><i class="bi bi-bar-chart-steps"></i></span>Classification Comparison</div>
+            <img src="/static/charts/model_comparison_classification.png" alt="Classification" class="chart-img">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tab-content -->
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p class="mb-0">SalesForecastAI — AI-Powered Sales Analytics & Forecasting System</p>
+  </div>
+</footer>
+
+<!-- Handle demand result visibility -->
+<script>
+document.getElementById('demandForm').addEventListener('submit', function() {
+  document.getElementById('demandPlaceholder').style.display = 'none';
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/script.js"></script>
+</body>
+</html>

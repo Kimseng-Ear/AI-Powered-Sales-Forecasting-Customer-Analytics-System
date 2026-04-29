@@ -1,0 +1,72 @@
+{
+  "regression": {
+    "Linear Regression": {
+      "MAE": 240.38409845339373,
+      "MSE": 143416.1318990292,
+      "RMSE": 378.7032240409754,
+      "R2": 0.9358529678864886
+    },
+    "Decision Tree": {
+      "MAE": 123.81300871774022,
+      "MSE": 113451.63738412758,
+      "RMSE": 336.82582648028574,
+      "R2": 0.9492554587113409
+    },
+    "Random Forest": {
+      "MAE": 97.15891833333328,
+      "MSE": 68787.05091584558,
+      "RMSE": 262.2728558502492,
+      "R2": 0.9692329927905248
+    },
+    "Gradient Boosting": {
+      "MAE": 83.49891698671128,
+      "MSE": 30270.970830767033,
+      "RMSE": 173.9855477640802,
+      "R2": 0.986460428737853
+    },
+    "XGBoost": {
+      "MAE": 78.18147987683614,
+      "MSE": 33324.83341325933,
+      "RMSE": 182.55090636110063,
+      "R2": 0.9850944999643221
+    }
+  },
+  "classification": {
+    "Logistic Regression": {
+      "Accuracy": 0.9861111111111112,
+      "Precision": 0.9506172839506173,
+      "Recall": 0.9871794871794872,
+      "F1": 0.9685534591194969
+    },
+    "Decision Tree Classifier": {
+      "Accuracy": 0.9888888888888889,
+      "Precision": 0.9743589743589743,
+      "Recall": 0.9743589743589743,
+      "F1": 0.9743589743589743
+    },
+    "Random Forest Classifier": {
+      "Accuracy": 0.9916666666666667,
+      "Precision": 0.987012987012987,
+      "Recall": 0.9743589743589743,
+      "F1": 0.9806451612903225
+    }
+  },
+  "best_regression_model": "Gradient Boosting",
+  "best_classification_model": "Random Forest Classifier",
+  "features": [
+    "Quantity",
+    "UnitPrice",
+    "Month",
+    "Year",
+    "Quarter",
+    "IsWeekend",
+    "Weekday",
+    "Product_enc",
+    "ProductCategory_enc",
+    "PaymentMethod_enc",
+    "ReviewRating",
+    "PurchaseFrequency",
+    "AverageOrderValue"
+  ],
+  "threshold_high_value": 2795.2999999999997
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "Product": "Tablet",
+    "Revenue": 533091.0
+  },
+  {
+    "Product": "Laptop",
+    "Revenue": 481721.4
+  },
+  {
+    "Product": "Monitor",
+    "Revenue": 468632.8
+  },
+  {
+    "Product": "Desk",
+    "Revenue": 454006.7
+  },
+  {
+    "Product": "Phone",
+    "Revenue": 444989.72
+  },
+  {
+    "Product": "Chair",
+    "Revenue": 443118.71
+  },
+  {
+    "Product": "Printer",
+    "Revenue": 441096.47000000003
+  }
+]

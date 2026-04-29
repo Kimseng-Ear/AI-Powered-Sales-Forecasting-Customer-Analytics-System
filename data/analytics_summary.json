@@ -1,0 +1,14 @@
+{
+  "total_revenue": 3266656.8,
+  "total_orders": 1800,
+  "total_customers": 1642,
+  "total_products": 7,
+  "avg_rating": 2.995,
+  "avg_order_value": 1814.8093333333331,
+  "best_product": "Tablet",
+  "best_category": "Office Supplies",
+  "monthly_growth": -24.172130090115694,
+  "forecast_30d": 4254.022350956338,
+  "forecast_60d": 4260.7736822736315,
+  "forecast_90d": 4267.5250135909255
+}

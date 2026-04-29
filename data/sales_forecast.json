@@ -1,0 +1,22 @@
+[
+  {
+    "Days": "Day+1",
+    "Date": "2025-07-01",
+    "ForecastedRevenue": 4247.496064016288
+  },
+  {
+    "Days": "Day+30",
+    "Date": "2025-07-30",
+    "ForecastedRevenue": 4254.022350956338
+  },
+  {
+    "Days": "Day+60",
+    "Date": "2025-08-29",
+    "ForecastedRevenue": 4260.7736822736315
+  },
+  {
+    "Days": "Day+90",
+    "Date": "2025-09-28",
+    "ForecastedRevenue": 4267.5250135909255
+  }
+]

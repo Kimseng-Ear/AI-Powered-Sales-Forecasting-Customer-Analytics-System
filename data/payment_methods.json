@@ -1,0 +1,22 @@
+[
+  {
+    "Method": "Debit Card",
+    "Count": 396
+  },
+  {
+    "Method": "Cash",
+    "Count": 356
+  },
+  {
+    "Method": "Gift Card",
+    "Count": 353
+  },
+  {
+    "Method": "Credit Card",
+    "Count": 349
+  },
+  {
+    "Method": "Online",
+    "Count": 346
+  }
+]

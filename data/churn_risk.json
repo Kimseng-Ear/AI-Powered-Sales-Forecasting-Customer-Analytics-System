@@ -1,0 +1,18 @@
+[
+  {
+    "Risk": "Churned",
+    "Count": 1285
+  },
+  {
+    "Risk": "Cold",
+    "Count": 174
+  },
+  {
+    "Risk": "Warm",
+    "Count": 121
+  },
+  {
+    "Risk": "Active",
+    "Count": 62
+  }
+]

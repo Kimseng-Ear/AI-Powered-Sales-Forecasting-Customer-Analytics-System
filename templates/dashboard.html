@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <title>Analytics Dashboard — SalesForecastAI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .main-content { padding: 28px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 20px; }
+  </style>
+</head>
+<body id="dashboardPage">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/"><img src="/logo.png" alt="SalesForecastAI Logo" class="navbar-logo">SalesForecast<span style="color:var(--primary)">AI</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house me-1"></i>Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/prediction"><i class="bi bi-cpu me-1"></i>Predict</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid p-0">
+  <div class="main-content">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+      <div>
+        <h1 class="fw-800 mb-1">Analytics Dashboard</h1>
+        <p class="text-muted-custom mb-0">Real-time sales performance & customer intelligence</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/analytics" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-download me-1"></i>Export JSON
+        </a>
+        <a href="/prediction" class="btn btn-gradient-primary btn-sm">
+          <i class="bi bi-cpu me-1"></i>Make Prediction
+        </a>
+      </div>
+    </div>
+
+    <!-- ── KPI Row ─────────────────────────────────────────────────────── -->
+    <div class="kpi-grid mb-4">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-icon bg-gradient-primary"><i class="bi bi-currency-dollar text-white"></i></div>
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value"
+             data-counter="{{ summary.total_revenue|default(0)|round(0)|int }}"
+             data-prefix="$">
+          ${{ '{:,.0f}'.format(summary.total_revenue|default(0)) }}
+        </div>
+        {% if summary.monthly_growth is defined %}
+        <div class="kpi-change {{ 'positive' if summary.monthly_growth >= 0 else 'negative' }}">
+          <i class="bi bi-arrow-{{ 'up' if summary.monthly_growth >= 0 else 'down' }}-right"></i>
+          {{ '{:.1f}'.format(summary.monthly_growth|default(0)) }}% vs last month
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="kpi-card kpi-secondary">
+        <div class="kpi-icon bg-gradient-secondary"><i class="bi bi-people-fill text-white"></i></div>
+        <div class="kpi-label">Total Customers</div>
+        <div class="kpi-value"
+             data-counter="{{ summary.total_customers|default(0) }}">
+          {{ '{:,}'.format(summary.total_customers|default(0)) }}
+        </div>
+        <div class="kpi-change positive"><i class="bi bi-person-plus"></i> Active buyers</div>
+      </div>
+
+      <div class="kpi-card kpi-accent">
+        <div class="kpi-icon bg-gradient-accent"><i class="bi bi-bag-check-fill text-white"></i></div>
+        <div class="kpi-label">Total Orders</div>
+        <div class="kpi-value"
+             data-counter="{{ summary.total_orders|default(0) }}">
+          {{ '{:,}'.format(summary.total_orders|default(0)) }}
+        </div>
+        <div class="kpi-change positive"><i class="bi bi-receipt"></i> Transactions</div>
+      </div>
+
+      <div class="kpi-card kpi-warning">
+        <div class="kpi-icon bg-gradient-warning"><i class="bi bi-star-fill text-white"></i></div>
+        <div class="kpi-label">Avg Rating</div>
+        <div class="kpi-value"
+             data-counter="{{ summary.avg_rating|default(0) }}"
+             data-suffix="/5">
+          {{ '{:.2f}'.format(summary.avg_rating|default(0)) }}/5
+        </div>
+        <div class="kpi-change positive">⭐ Customer satisfaction</div>
+      </div>
+
+      <div class="kpi-card kpi-info">
+        <div class="kpi-icon" style="background:linear-gradient(135deg,#4A90D9,#0984e3);">
+          <i class="bi bi-bag-fill text-white"></i>
+        </div>
+        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-value"
+             data-counter="{{ summary.avg_order_value|default(0)|round(2) }}"
+             data-prefix="$">
+          ${{ '{:.2f}'.format(summary.avg_order_value|default(0)) }}
+        </div>
+        <div class="kpi-change positive"><i class="bi bi-graph-up"></i> Per transaction</div>
+      </div>
+    </div>
+
+    <!-- ── Sales Forecast Banner ─────────────────────────────────────── -->
+    <div class="glass-card p-4 mb-4" style="border-left:3px solid var(--primary);">
+      <div class="row g-3 align-items-center">
+        <div class="col-auto">
+          <div class="kpi-icon bg-gradient-primary">
+            <i class="bi bi-graph-up-arrow text-white"></i>
+          </div>
+        </div>
+        <div class="col">
+          <h6 class="fw-700 mb-1">ML Revenue Forecast</h6>
+          <p class="text-muted-custom mb-0" style="font-size:0.82rem;">
+            Based on historical trends & machine learning regression
+          </p>
+        </div>
+        {% for label, key in [('30-Day', 'forecast_30d'), ('60-Day', 'forecast_60d'), ('90-Day', 'forecast_90d')] %}
+        <div class="col-auto text-center">
+          <div class="kpi-label">{{ label }} Forecast</div>
+          <div class="fw-800" style="font-size:1.3rem;color:var(--primary);">
+            ${{ '{:,.0f}'.format(summary[key]|default(0)) }}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="col-auto">
+          <a href="/prediction" class="btn btn-gradient-primary btn-sm">
+            <i class="bi bi-cpu me-1"></i>Predict Now
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Nav Tabs ───────────────────────────────────────────────────── -->
+    <ul class="nav nav-tabs-custom nav-tabs" id="dashTabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabOverview">Overview</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabSales">Sales Trends</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabProducts">Products</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabCustomers">Customers</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabSegments">Segments</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabML">ML Models</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+      <!-- ── Overview Tab ─────────────────────────────────────────────── -->
+      <div class="tab-pane fade show active" id="tabOverview">
+        <div class="row g-4 mt-1">
+          <!-- Monthly Trend -->
+          <div class="col-xl-8">
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-graph-up"></i></span>
+                Monthly Revenue Trend
+              </div>
+              <div class="canvas-container">
+                <canvas id="monthlyTrendChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Category Donut -->
+          <div class="col-xl-4">
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-pie-chart"></i></span>
+                Revenue by Category
+              </div>
+              <div class="canvas-container">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Top Products -->
+          <div class="col-xl-6">
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-box-seam"></i></span>
+                Top 10 Products
+              </div>
+              <div class="canvas-container">
+                <canvas id="topProductsChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Payment Methods -->
+          <div class="col-xl-6">
+            <div class="chart-card">
+              <div class="card-title">
+                <span class="chart-icon"><i class="bi bi-credit-card"></i></span>
+                Payment Methods
+              </div>
+              <div class="canvas-container">
+                <canvas id="paymentChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sales Trends Tab ──────────────────────────────────────────── -->
+      <div class="tab-pane fade" id="tabSales">
+        <div class="row g-4 mt-1">
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-calendar3"></i></span> Monthly Sales Trend</div>
+              <img src="/static/charts/monthly_sales_trend.png" alt="Monthly Sales" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-calendar-week"></i></span> Weekday Sales</div>
+              <img src="/static/charts/weekday_sales.png" alt="Weekday Sales" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-bar-chart"></i></span> Quarterly Revenue</div>
+              <img src="/static/charts/quarterly_revenue.png" alt="Quarterly" class="chart-img">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-grid"></i></span> Revenue Heatmap</div>
+              <img src="/static/charts/revenue_heatmap.png" alt="Heatmap" class="chart-img">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-graph-up-arrow"></i></span> 90-Day Sales Forecast</div>
+              <img src="/static/charts/sales_forecast.png" alt="Forecast" class="chart-img">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Products Tab ──────────────────────────────────────────────── -->
+      <div class="tab-pane fade" id="tabProducts">
+        <div class="row g-4 mt-1">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-box-seam"></i></span> Top Products by Revenue</div>
+              <img src="/static/charts/top_products.png" alt="Top Products" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-pie-chart"></i></span> Category Revenue</div>
+              <img src="/static/charts/category_revenue_pie.png" alt="Category" class="chart-img">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="card-title mb-0"><span class="chart-icon"><i class="bi bi-table"></i></span> Top Products Detail</div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-dark-custom">
+                  <thead><tr>
+                    <th>#</th><th>Product</th><th>Revenue</th><th>Share</th>
+                  </tr></thead>
+                  <tbody>
+                    {% set total_rev = summary.total_revenue|default(1) %}
+                    {% for item in top_products[:10] %}
+                    <tr>
+                      <td>{{ loop.index }}</td>
+                      <td><strong>{{ item.Product }}</strong></td>
+                      <td class="text-primary-custom fw-600">${{ '{:,.2f}'.format(item.Revenue) }}</td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="progress-dark flex-grow-1">
+                            <div class="progress-bar-gradient"
+                                 style="width:{{ [(item.Revenue/total_rev*100), 100]|min|round(1) }}%"></div>
+                          </div>
+                          <small>{{ '{:.1f}'.format(item.Revenue/total_rev*100) }}%</small>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Customers Tab ─────────────────────────────────────────────── -->
+      <div class="tab-pane fade" id="tabCustomers">
+        <div class="row g-4 mt-1">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-trophy"></i></span> Top Customers</div>
+              <img src="/static/charts/top_customers.png" alt="Top Customers" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-star"></i></span> Review Distribution</div>
+              <img src="/static/charts/review_distribution.png" alt="Reviews" class="chart-img">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="d-flex align-items-center justify-content-between mb-3 gap-3">
+                <div class="card-title mb-0">
+                  <span class="chart-icon"><i class="bi bi-search"></i></span> Customer Search
+                </div>
+                <input type="text" id="customerSearch"
+                       class="form-control-dark"
+                       placeholder="🔍  Search by name or ID …"
+                       style="max-width:320px;">
+              </div>
+              <div class="table-responsive">
+                <table class="table table-dark-custom">
+                  <thead><tr>
+                    <th>#</th><th>Customer</th><th>Revenue</th>
+                    <th>Orders</th><th>Avg Order</th>
+                    <th>Rating</th><th>Last Purchase</th><th>Tier</th>
+                  </tr></thead>
+                  <tbody id="customerTableBody">
+                    <tr><td colspan="8" class="text-center text-muted-custom py-4">
+                      <span class="spinner-border spinner-border-sm me-2"></span>Loading customers…
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Segments Tab ──────────────────────────────────────────────── -->
+      <div class="tab-pane fade" id="tabSegments">
+        <div class="row g-4 mt-1">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-diagram-3"></i></span> RFM Customer Segments</div>
+              <div class="canvas-container">
+                <canvas id="rfmChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-exclamation-triangle"></i></span> Churn Risk Distribution</div>
+              <div class="canvas-container">
+                <canvas id="churnChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-people"></i></span> RFM Segments Chart</div>
+              <img src="/static/charts/rfm_segments.png" alt="RFM" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-person-x"></i></span> Churn Risk Chart</div>
+              <img src="/static/charts/churn_risk.png" alt="Churn" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-scatter-chart"></i></span> KMeans Clusters</div>
+              <img src="/static/charts/kmeans_clusters.png" alt="Clusters" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-graph-down"></i></span> Elbow Method</div>
+              <img src="/static/charts/kmeans_elbow.png" alt="Elbow" class="chart-img">
+            </div>
+          </div>
+          <!-- Segment Summary Table -->
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-table"></i></span> Segment Summary</div>
+              <div class="table-responsive">
+                <table class="table table-dark-custom">
+                  <thead><tr><th>Segment</th><th>Customers</th><th>% Share</th><th>Action</th></tr></thead>
+                  <tbody>
+                    {% set seg_total = rfm_segments|sum(attribute='Count') if rfm_segments else 1 %}
+                    {% for seg in rfm_segments %}
+                    <tr>
+                      <td>
+                        {% if seg.Segment == 'Champions' %}<span class="badge-custom badge-primary">🏆 {{ seg.Segment }}</span>
+                        {% elif seg.Segment == 'Loyal Customers' %}<span class="badge-custom badge-success">⭐ {{ seg.Segment }}</span>
+                        {% elif seg.Segment == 'At Risk' %}<span class="badge-custom badge-danger">⚠️ {{ seg.Segment }}</span>
+                        {% elif seg.Segment == 'Lost' %}<span class="badge-custom badge-warning">💔 {{ seg.Segment }}</span>
+                        {% else %}<span class="badge-custom badge-info">{{ seg.Segment }}</span>{% endif %}
+                      </td>
+                      <td>{{ '{:,}'.format(seg.Count) }}</td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="progress-dark" style="width:100px">
+                            <div class="progress-bar-gradient" style="width:{{ (seg.Count/seg_total*100)|round(1) }}%"></div>
+                          </div>
+                          <small>{{ '{:.1f}'.format(seg.Count/seg_total*100) }}%</small>
+                        </div>
+                      </td>
+                      <td>
+                        {% if seg.Segment in ['At Risk', 'Lost'] %}
+                          <span class="badge-custom badge-danger">Re-engage</span>
+                        {% else %}
+                          <span class="badge-custom badge-success">Retain</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ML Models Tab ─────────────────────────────────────────────── -->
+      <div class="tab-pane fade" id="tabML">
+        <div class="row g-4 mt-1">
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-stars"></i></span> Feature Importance</div>
+              <img src="/static/charts/feature_importance.png" alt="Feature Importance" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-graph-up"></i></span> Actual vs Predicted</div>
+              <img src="/static/charts/actual_vs_predicted.png" alt="Actual vs Predicted" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-bar-chart"></i></span> Model Comparison (Regression)</div>
+              <img src="/static/charts/model_comparison_regression.png" alt="Model Comparison" class="chart-img">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-activity"></i></span> Residuals Distribution</div>
+              <img src="/static/charts/residuals.png" alt="Residuals" class="chart-img">
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-table"></i></span> Correlation Matrix</div>
+              <img src="/static/charts/correlation_matrix.png" alt="Correlation" class="chart-img" style="max-height:500px;">
+            </div>
+          </div>
+          <!-- Model Metrics -->
+          <div class="col-12">
+            <div class="chart-card">
+              <div class="card-title"><span class="chart-icon"><i class="bi bi-clipboard-data"></i></span> ML Model Performance</div>
+              <div id="modelMetricsContainer">
+                <div class="text-center text-muted-custom py-4">
+                  <span class="spinner-border spinner-border-sm me-2"></span>Loading metrics…
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-content -->
+  </div><!-- /main-content -->
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p class="mb-0">SalesForecastAI — AI-Powered Sales Analytics & Forecasting System</p>
+  </div>
+</footer>
+
+<!-- Pass data to JS -->
+<script>
+  window.MONTHLY_DATA   = {{ monthly|tojson }};
+  window.CAT_DATA       = {{ category_revenue|tojson }};
+  window.TOP_PRODUCTS   = {{ top_products|tojson }};
+  window.PAYMENT_DATA   = {{ payments|tojson }};
+  window.RFM_DATA       = {{ rfm_segments|tojson }};
+  window.CHURN_DATA     = {{ churn|tojson }};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Load model results for metrics table
+  fetch('/model-metrics')
+    .then(r => r.json())
+    .then(d => { if (d.status === 'success') window.MODEL_RESULTS = d.data; })
+    .catch(() => {});
+</script>
+<script src="/static/script.js"></script>
+</body>
+</html>

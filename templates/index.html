@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <title>AI Sales Forecasting — Home</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/">
+      <img src="/logo.png" alt="SalesForecastAI Logo" class="navbar-logo">
+      SalesForecast<span style="color:var(--primary)">AI</span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link active" href="/"><i class="bi bi-house me-1"></i>Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/prediction"><i class="bi bi-cpu me-1"></i>Predict</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────────────── -->
+<section class="hero-section position-relative">
+  <canvas id="particleCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+  <div class="container position-relative" style="z-index:2;">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <span class="badge badge-primary badge-custom mb-3">
+          <i class="bi bi-stars me-1"></i> AI-Powered Analytics
+        </span>
+        <h1 class="hero-title mb-4">
+          Intelligent<br>
+          <span class="gradient-text">Sales Forecasting</span><br>
+          & Customer Analytics
+        </h1>
+        <p class="hero-subtitle mb-5">
+          Unlock the power of machine learning to predict future sales,
+          understand customer behaviour, and make data-driven decisions
+          with real-time interactive dashboards.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="/dashboard" class="btn btn-gradient-primary btn-lg">
+            <i class="bi bi-speedometer2 me-2"></i>View Dashboard
+          </a>
+          <a href="/prediction" class="btn btn-outline-custom btn-lg">
+            <i class="bi bi-cpu me-2"></i>Make Prediction
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="row g-3">
+          {% set kpis = [
+            ('bi-currency-dollar', 'Total Revenue',     summary.total_revenue|default(0)|round(0)|int,     'bg-gradient-primary',  '$', ''),
+            ('bi-people',          'Total Customers',   summary.total_customers|default(0),               'bg-gradient-secondary', '', ''),
+            ('bi-bag-check',       'Total Orders',      summary.total_orders|default(0),                  'bg-gradient-accent',   '', ''),
+            ('bi-star-fill',       'Avg Rating',        summary.avg_rating|default(0),                    'bg-gradient-warning',  '', '/5'),
+          ] %}
+          {% for icon, label, val, grad, pre, suf in kpis %}
+          <div class="col-6">
+            <div class="kpi-card glass-card text-center">
+              <div class="kpi-icon {{ grad }} mx-auto">
+                <i class="bi {{ icon }} text-white"></i>
+              </div>
+              <div class="kpi-label">{{ label }}</div>
+              <div class="kpi-value"
+                   data-counter="{{ val }}"
+                   data-prefix="{{ pre }}"
+                   data-suffix="{{ suf }}">{{ pre }}{{ val }}{{ suf }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ───────────────────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2>Comprehensive Analytics Platform</h2>
+      <div class="section-divider mx-auto"></div>
+      <p class="text-muted-custom mt-2">Everything you need to understand your sales data</p>
+    </div>
+    <div class="row g-4">
+      {% set features = [
+        ('bi-graph-up-arrow', 'Sales Forecasting', 'Predict revenue for 30, 60 & 90 days using ML regression models with high accuracy.', 'primary'),
+        ('bi-people-fill',    'Customer Analytics', 'Deep-dive into customer lifetime value, RFM segmentation, and churn risk analysis.', 'secondary'),
+        ('bi-box-seam',       'Product Insights', 'Identify top-selling products, category performance, and demand forecasting.', 'accent'),
+        ('bi-cpu-fill',       'ML Models',          'Compare Linear Regression, Random Forest, XGBoost, and Gradient Boosting models.', 'warning'),
+        ('bi-pie-chart-fill', 'Interactive Charts',  'Real-time Chart.js dashboards with filters, search, and drill-down capabilities.', 'info'),
+        ('bi-shield-check',   'REST API',            'Clean JSON REST API with endpoints for analytics, prediction, and customer data.', 'primary'),
+      ] %}
+      {% for icon, title, desc, color in features %}
+      <div class="col-md-6 col-lg-4">
+        <div class="chart-card h-100 animate-fade-up">
+          <div class="d-flex align-items-start gap-3">
+            <div class="kpi-icon bg-gradient-{{ color }} flex-shrink-0" style="width:44px;height:44px;">
+              <i class="bi {{ icon }} text-white"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-1">{{ title }}</h5>
+              <p class="text-muted-custom mb-0" style="font-size:0.875rem;">{{ desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Forecast Preview ────────────────────────────────────────────────── -->
+<section class="py-5" style="background:rgba(255,255,255,0.02);">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <div class="section-header">
+          <span class="badge badge-success badge-custom mb-3">📈 Forecasting Engine</span>
+          <h2>Sales Forecasts at Your Fingertips</h2>
+          <div class="section-divider"></div>
+          <p class="text-muted-custom mt-3">
+            Our ML engine continuously learns from your historical data
+            to deliver highly accurate revenue predictions.
+          </p>
+        </div>
+        <div class="row g-3 mt-3">
+          {% for days, val_key in [('30-Day', 'forecast_30d'), ('60-Day', 'forecast_60d'), ('90-Day', 'forecast_90d')] %}
+          <div class="col-4">
+            <div class="kpi-card text-center" style="padding:16px;">
+              <div class="kpi-label">{{ days }}</div>
+              <div class="kpi-value" style="font-size:1.2rem;">
+                ${{ "{:,}".format((summary[val_key]|default(0))|round(0)|int) if summary else '–' }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <a href="/dashboard" class="btn btn-gradient-primary mt-4">
+          <i class="bi bi-speedometer2 me-2"></i>Open Full Dashboard
+        </a>
+      </div>
+      <div class="col-lg-7">
+        <div class="chart-card">
+          <div class="card-title">
+            <span class="chart-icon"><i class="bi bi-graph-up"></i></span>
+            Sales Trend Overview
+          </div>
+          <img src="/static/charts/monthly_sales_trend.png"
+               alt="Monthly Sales Trend"
+               class="chart-img"
+               onerror="this.style.display='none'">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Stats ─────────────────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2>Platform Insights</h2>
+      <div class="section-divider mx-auto"></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="chart-card">
+          <div class="card-title">
+            <span class="chart-icon"><i class="bi bi-box-seam"></i></span>
+            Top Products by Revenue
+          </div>
+          <img src="/static/charts/top_products.png" alt="Top Products" class="chart-img"
+               onerror="this.style.display='none'">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-card">
+          <div class="card-title">
+            <span class="chart-icon"><i class="bi bi-pie-chart"></i></span>
+            Revenue by Category
+          </div>
+          <img src="/static/charts/category_revenue_pie.png" alt="Category Revenue" class="chart-img"
+               onerror="this.style.display='none'">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(255,101,132,0.1));">
+  <div class="container text-center">
+    <h2 class="fw-800 mb-3">Ready to Predict Your Next Sale?</h2>
+    <p class="text-muted-custom mb-4" style="max-width:480px;margin:auto;">
+      Use our trained ML models to get instant revenue predictions
+      and demand forecasts for any product.
+    </p>
+    <a href="/prediction" class="btn btn-gradient-primary btn-lg">
+      <i class="bi bi-cpu me-2"></i>Start Predicting Now
+    </a>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <p class="mb-1">
+      <strong style="color:#fff;">SalesForecastAI</strong> — 
+      AI-Powered Sales Forecasting & Customer Analytics System
+    </p>
+    <p class="mb-0">
+      Built with <span style="color:var(--secondary);">♥</span> using
+      Python · Flask · Scikit-learn · Chart.js · Bootstrap
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/script.js"></script>
+</body>
+</html>
