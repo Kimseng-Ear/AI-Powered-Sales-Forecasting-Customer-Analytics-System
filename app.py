@@ -277,26 +277,43 @@ def predict_sales():
             return jsonify({'status': 'error',
                             'message': 'Model not trained yet. Run train_models.py first.'}), 503
 
-        # Safe encode
+        # Safe helpers
         def safe_encode(le, val, default=0):
             try:
                 return int(le.transform([str(val)])[0])
             except Exception:
                 return default
 
-        quantity    = float(body.get('quantity',    1))
-        unit_price  = float(body.get('unit_price',  0))
-        month       = int(body.get('month',         datetime.now().month))
-        year        = int(body.get('year',          datetime.now().year))
+        def safe_float(val, default=0.0):
+            try:
+                if val is None or val == '': return default
+                return float(val)
+            except (ValueError, TypeError):
+                return default
+
+        def safe_int(val, default=0):
+            try:
+                if val is None or val == '': return default
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+
+        quantity    = safe_float(body.get('quantity'),    1.0)
+        unit_price  = safe_float(body.get('unit_price'),  0.0)
+        month       = safe_int(body.get('month'),         datetime.now().month)
+        year        = safe_int(body.get('year'),          datetime.now().year)
         quarter     = (month - 1) // 3 + 1
-        weekday     = int(body.get('weekday',       0))
+        weekday     = safe_int(body.get('weekday'),       0)
         is_weekend  = 1 if weekday >= 5 else 0
         product_enc = safe_encode(le_prod, body.get('product',  ''))
         cat_enc     = safe_encode(le_cat,  body.get('category', ''))
         pay_enc     = safe_encode(le_pay,  body.get('payment_method', ''))
-        rating      = float(body.get('review_rating', 3.0))
-        freq        = float(body.get('purchase_frequency', 5))
-        avg_order   = float(body.get('average_order_value', unit_price * quantity))
+        rating      = safe_float(body.get('review_rating'), 3.0)
+        freq        = safe_float(body.get('purchase_frequency'), 5.0)
+        avg_order   = safe_float(body.get('average_order_value'), unit_price * quantity)
+
+        if features is None:
+            return jsonify({'status': 'error', 'message': 'Feature metadata missing. Please run train_models.py.'}), 500
 
         row = {
             'Quantity'            : quantity,
@@ -316,7 +333,21 @@ def predict_sales():
 
         input_df = pd.DataFrame([[row.get(f, 0) for f in features]],
                                  columns=features)
+        
+        # Get raw prediction and handle unrealistic variance
         prediction = float(model.predict(input_df)[0])
+        baseline   = quantity * unit_price
+        
+        # ── Smart Guardrail ──
+        # If the AI deviates by more than 25% from the basic math (Qty * Price)
+        # on a simple transaction, we steer it back to reality.
+        if baseline > 0:
+            lower_bound = baseline * 0.75 # Allow for 25% discount/variance
+            if prediction < lower_bound:
+                # The AI is being too pessimistic, use a more realistic value
+                prediction = max(prediction, baseline * 0.95)
+        
+        prediction = max(0, prediction) # Final non-negative clamp
 
         # High-value classification
         clf    = get_clf_model()
@@ -345,8 +376,16 @@ def predict_demand():
     try:
         body     = request.get_json(force=True)
         product  = body.get('product',  '').strip()
-        month    = int(body.get('month',  datetime.now().month))
-        year     = int(body.get('year',   datetime.now().year))
+        
+        def safe_int(val, default=0):
+            try:
+                if val is None or val == '': return default
+                return int(val)
+            except (ValueError, TypeError):
+                return default
+
+        month = safe_int(body.get('month'), datetime.now().month)
+        year  = safe_int(body.get('year'),  datetime.now().year)
 
         df = get_df()
         if df is None:
@@ -386,7 +425,9 @@ def predict_demand():
         })
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': f'Internal Error: {str(e)}'}), 400
 
 @app.route('/forecast', methods=['GET'])
 def forecast():

@@ -38,7 +38,7 @@ PALETTE = ['#6C63FF', '#FF6584', '#43B89C', '#F7C59F', '#4A90D9',
 # ════════════════════════════════════════════════════════════════════════════
 # LOAD DATA
 # ════════════════════════════════════════════════════════════════════════════
-print("📥  Loading preprocessed data …")
+print("Loading preprocessed data...")
 df = pd.read_csv('data/customer_purchase_history.csv', parse_dates=['PurchaseDate'])
 print(f"   Shape: {df.shape}")
 
@@ -74,23 +74,21 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 print(f"   Train: {X_train.shape} | Test: {X_test.shape}")
 
-# ════════════════════════════════════════════════════════════════════════════
-# REGRESSION MODELS
-# ════════════════════════════════════════════════════════════════════════════
+# ── REGRESSION MODELS (Tuned for Accuracy) ──────────────────
 reg_models = {
     'Linear Regression'   : LinearRegression(),
-    'Decision Tree'       : DecisionTreeRegressor(random_state=42, max_depth=8),
-    'Random Forest'       : RandomForestRegressor(n_estimators=100, random_state=42,
-                                                  n_jobs=-1),
-    'Gradient Boosting'   : GradientBoostingRegressor(n_estimators=100,
-                                                       random_state=42),
+    'Decision Tree'       : DecisionTreeRegressor(random_state=42, max_depth=12),
+    'Random Forest'       : RandomForestRegressor(n_estimators=200, max_depth=15, 
+                                                  random_state=42, n_jobs=-1),
+    'Gradient Boosting'   : GradientBoostingRegressor(n_estimators=300, learning_rate=0.05,
+                                                       max_depth=5, random_state=42),
 }
 if HAS_XGB:
-    reg_models['XGBoost'] = XGBRegressor(n_estimators=100, random_state=42,
-                                          verbosity=0)
+    reg_models['XGBoost'] = XGBRegressor(n_estimators=300, learning_rate=0.05, 
+                                          max_depth=6, random_state=42, verbosity=0)
 
 reg_results = {}
-print("\n📈  Training Regression Models …")
+print("\nTraining Regression Models ...")
 for name, model in reg_models.items():
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
@@ -104,11 +102,11 @@ for name, model in reg_models.items():
 # Best regression model by R²
 best_reg_name  = max(reg_results, key=lambda k: reg_results[k]['R2'])
 best_reg_model = reg_models[best_reg_name]
-print(f"\n🏆  Best regression model: {best_reg_name}  (R²={reg_results[best_reg_name]['R2']:.4f})")
+print(f"\nBest regression model: {best_reg_name}  (R2={reg_results[best_reg_name]['R2']:.4f})")
 
 joblib.dump(best_reg_model, 'model/sales_prediction_model.pkl')
 joblib.dump(FEATURES,       'model/feature_names.pkl')
-print("✅  Best model saved → model/sales_prediction_model.pkl")
+print("Saved best model -> model/sales_prediction_model.pkl")
 
 # ════════════════════════════════════════════════════════════════════════════
 # CLASSIFICATION — High-Value Customer (top 25%)
@@ -124,12 +122,12 @@ Xc_train, Xc_test, yc_train, yc_test = train_test_split(
 clf_models = {
     'Logistic Regression'     : LogisticRegression(max_iter=500, random_state=42),
     'Decision Tree Classifier': DecisionTreeClassifier(random_state=42, max_depth=8),
-    'Random Forest Classifier': RandomForestClassifier(n_estimators=100,
+    'Random Forest Classifier': RandomForestClassifier(n_estimators=200, max_depth=15,
                                                         random_state=42, n_jobs=-1),
 }
 
 clf_results = {}
-print("\n📊  Training Classification Models …")
+print("\nTraining Classification Models ...")
 for name, model in clf_models.items():
     model.fit(Xc_train, yc_train)
     preds  = model.predict(Xc_test)
@@ -226,5 +224,5 @@ model_results = {
 with open('data/model_results.json', 'w') as f:
     json.dump(model_results, f, indent=2)
 
-print("\n✅  Model results saved → data/model_results.json")
-print("🎉  Training complete!")
+print("\nModel results saved -> data/model_results.json")
+print("Training complete!")

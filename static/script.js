@@ -46,6 +46,16 @@ function fmtPercent(val, decimals = 1) {
   return Number(val).toFixed(decimals) + '%';
 }
 
+/* ── Chart Registry (Prevent 'Canvas in use' errors) ───────── */
+const activeCharts = {};
+
+function destroyChart(id) {
+  if (activeCharts[id]) {
+    activeCharts[id].destroy();
+    delete activeCharts[id];
+  }
+}
+
 /* Animated counter */
 function animateCounter(el, target, duration = 1200, prefix = '', suffix = '') {
   const start     = 0;
@@ -115,7 +125,8 @@ function showToast(message, type = 'success') {
 function makeLineChart(canvasId, labels, datasets, options = {}) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-  return new Chart(ctx, {
+  destroyChart(canvasId);
+  activeCharts[canvasId] = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
     options: {
@@ -136,12 +147,14 @@ function makeLineChart(canvasId, labels, datasets, options = {}) {
       ...options,
     },
   });
+  return activeCharts[canvasId];
 }
 
 function makeBarChart(canvasId, labels, data, colors, options = {}) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-  return new Chart(ctx, {
+  destroyChart(canvasId);
+  activeCharts[canvasId] = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
@@ -170,12 +183,14 @@ function makeBarChart(canvasId, labels, data, colors, options = {}) {
       ...options,
     },
   });
+  return activeCharts[canvasId];
 }
 
 function makeDoughnutChart(canvasId, labels, data, colors) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-  return new Chart(ctx, {
+  destroyChart(canvasId);
+  activeCharts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels,
@@ -201,12 +216,14 @@ function makeDoughnutChart(canvasId, labels, data, colors) {
       },
     },
   });
+  return activeCharts[canvasId];
 }
 
 function makeHorizontalBarChart(canvasId, labels, data, colors) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-  return new Chart(ctx, {
+  destroyChart(canvasId);
+  activeCharts[canvasId] = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
@@ -227,6 +244,7 @@ function makeHorizontalBarChart(canvasId, labels, data, colors) {
       },
     },
   });
+  return activeCharts[canvasId];
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -319,23 +337,73 @@ function initDashboard() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   PREDICTION PAGE
+   PREDICTION PAGE (Quick Presets & Logic)
    ════════════════════════════════════════════════════════════ */
+
+/**
+ * Apply Form Presets for quick testing
+ */
+window.applyPreset = function(type) {
+  const presets = {
+    'standard': {
+      product: 'Chair', category: 'Furniture', payment: 'Cash',
+      qty: 1, price: 49.99, avg: 49.99, rating: 4.2, freq: 2,
+      month: 1, year: 2025, weekday: 0
+    },
+    'bulk': {
+      product: 'Office Desk', category: 'Office Supplies', payment: 'Credit Card',
+      qty: 12, price: 199.99, avg: 2400.00, rating: 4.8, freq: 8,
+      month: 3, year: 2025, weekday: 2
+    },
+    'vip': {
+      product: 'Laptop', category: 'Electronics', payment: 'PayPal',
+      qty: 1, price: 1299.99, avg: 1500.00, rating: 5.0, freq: 25,
+      month: 11, year: 2025, weekday: 4
+    }
+  };
+
+  const data = presets[type];
+  if (!data) return;
+
+  // Fill form fields
+  const form = document.getElementById('predictionForm');
+  if (!form) return;
+
+  $('#product', form).value = data.product;
+  $('#category', form).value = data.category;
+  $('#paymentMethod', form).value = data.payment;
+  $('#qty', form).value = data.qty;
+  $('#unitPrice', form).value = data.price;
+  $('#avgOrder', form).value = data.avg;
+  $('#rating', form).value = data.rating;
+  $('#freq', form).value = data.freq;
+  $('#month', form).value = data.month;
+  $('#year', form).value = data.year;
+  $('#weekday', form).value = data.weekday;
+
+  // Smooth visual feedback
+  form.classList.add('animate-pulse');
+  setTimeout(() => form.classList.remove('animate-pulse'), 800);
+  showToast(`Applied ${type.toUpperCase()} preset`, 'info');
+};
+
 function initPrediction() {
   if (!document.getElementById('predictionPage')) return;
 
   const form        = document.getElementById('predictionForm');
   const resultDiv   = document.getElementById('predictionResult');
+  const placeholder = document.getElementById('predictionResultPlaceholder');
   const demandForm  = document.getElementById('demandForm');
-  const demandResult= document.getElementById('demandResult');
 
-  // Sales Prediction
+  // Sales Prediction Handler
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = form.querySelector('[type=submit]');
+      const originalHtml = btn.innerHTML;
+      
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Predicting…';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Simulating...';
 
       try {
         const payload = {
@@ -360,34 +428,37 @@ function initPrediction() {
         const data = await res.json();
 
         if (data.status === 'success') {
-          resultDiv.style.display = 'block';
-          resultDiv.classList.add('animate-fade-up');
+          if (placeholder) placeholder.style.display = 'none';
+          if (resultDiv) resultDiv.style.display = 'block';
 
           const revEl = document.getElementById('predRevenue');
-          if (revEl) animateCounter(revEl, data.predicted_revenue, 1200, '$');
+          if (revEl) animateCounter(revEl, data.predicted_revenue, 1400, '$');
 
           const hvEl = document.getElementById('predHighValue');
           if (hvEl) {
-            hvEl.textContent = data.is_high_value ? '⭐ High-Value Transaction' : 'Standard Transaction';
-            hvEl.className   = 'badge ' + (data.is_high_value ? 'badge-success' : 'badge-info') +
-                               ' badge-custom fs-6 p-2';
+            hvEl.textContent = data.is_high_value ? 'VIP TRANSACTION' : 'STANDARD';
+            hvEl.className   = 'badge badge-custom ' + (data.is_high_value ? 'bg-success' : 'bg-primary');
+            
+            // Dynamic Glow effect
+            const card = resultDiv.querySelector('.prediction-result-card');
+            if (card) {
+                card.style.borderColor = data.is_high_value ? 'rgba(67, 184, 156, 0.6)' : 'rgba(108, 99, 255, 0.4)';
+            }
           }
 
           const probEl = document.getElementById('predProbBar');
           if (probEl) probEl.style.width = data.high_value_probability + '%';
 
           const probText = document.getElementById('predProbText');
-          if (probText) probText.textContent = fmtPercent(data.high_value_probability) + ' high-value probability';
+          if (probText) probText.textContent = data.high_value_probability + '%';
 
-          showToast('Prediction completed successfully!', 'success');
-        } else {
-          showToast('Prediction error: ' + data.message, 'error');
+          showToast('Intelligence analysis complete!', 'success');
         }
       } catch(err) {
-        showToast('Network error: ' + err.message, 'error');
+        showToast('Prediction failed: ' + err.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Predict Revenue';
+        btn.innerHTML = originalHtml;
       }
     });
   }
@@ -602,11 +673,55 @@ document.addEventListener('DOMContentLoaded', () => {
   // Smooth scroll for anchor links
   $$('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
+      const href = a.getAttribute('href');
+      if (href === '#') return; // Ignore top-of-page links
+      
+      const target = document.querySelector(href);
       if (target) {
         e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   });
+});
+
+/* ── Dynamic Category-to-Product Logic ────────────────────── */
+const PRODUCT_MAPPING = {
+  'Furniture': ['Chair', 'Table', 'Sofa', 'Bed', 'Cabinet', 'Desk', 'Bookshelf'],
+  'Office Supplies': ['Pen', 'Notebook', 'Paper', 'Stapler', 'Binder', 'Envelope', 'Marker'],
+  'Electronics': ['Phone', 'Laptop', 'Monitor', 'Keyboard', 'Mouse', 'Tablet', 'Headphones'],
+  'Home Appliances': ['Microwave', 'Toaster', 'Blender', 'Fan', 'Heater', 'Mixer', 'Coffee Maker'],
+  'Clothing': ['T-Shirt', 'Jeans', 'Jacket', 'Dress', 'Sneakers', 'Hat', 'Socks'],
+};
+
+function updateProductDropdown() {
+  const categoryEl = document.querySelector('#category');
+  const productEl  = document.querySelector('#product');
+  if (!categoryEl || !productEl) return;
+
+  const category = categoryEl.value;
+  const products = PRODUCT_MAPPING[category] || [];
+
+  // Clear and rebuild
+  productEl.innerHTML = '<option value="">-- Select Product --</option>';
+  products.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    productEl.appendChild(opt);
+  });
+
+  // Default to first product to ensure AI has a selection
+  if (products.length > 0) {
+    productEl.selectedIndex = 1;
+  }
+}
+
+// Attach event listener to category change
+document.addEventListener('DOMContentLoaded', () => {
+  const catEl = document.querySelector('#category');
+  if (catEl) {
+    catEl.addEventListener('change', updateProductDropdown);
+    updateProductDropdown(); // Initial call
+  }
 });

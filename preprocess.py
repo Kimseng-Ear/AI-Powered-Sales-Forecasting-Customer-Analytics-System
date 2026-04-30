@@ -44,7 +44,7 @@ def save_sqlite(df):
     conn = sqlite3.connect(DATA_DB)
     df.to_sql('customer_purchase_history', conn, if_exists='replace', index=False)
     conn.close()
-    print(f"✅  Saved → {DATA_DB}")
+    print(f"Saved SQLite database -> {DATA_DB}")
 
 # ─── Palette ─────────────────────────────────────────────────────────────────
 PALETTE = ['#6C63FF', '#FF6584', '#43B89C', '#F7C59F', '#4A90D9',
@@ -56,7 +56,7 @@ plt.rcParams.update({'font.family': 'DejaVu Sans', 'axes.titlesize': 14,
 # ════════════════════════════════════════════════════════════════════════════
 # 1. LOAD & CONVERT EXCEL → CSV
 # ════════════════════════════════════════════════════════════════════════════
-print("📥  Loading Excel file …")
+print("Loading Excel file ...")
 df_raw = pd.read_excel('Customer-Purchase-History.xlsx', engine='openpyxl')
 print(f"   Raw shape: {df_raw.shape}")
 print(f"   Columns  : {list(df_raw.columns)}")
@@ -152,7 +152,7 @@ if 'RevenuePerCustomer_x' in df.columns:
 
 # Save clean CSV
 df.to_csv('data/customer_purchase_history.csv', index=False)
-print("✅  Saved → data/customer_purchase_history.csv")
+print("Saved clean CSV -> data/customer_purchase_history.csv")
 
 # Save SQLite database for analytics queries
 save_sqlite(df)
@@ -160,7 +160,7 @@ save_sqlite(df)
 # ════════════════════════════════════════════════════════════════════════════
 # 4. EDA CHARTS
 # ════════════════════════════════════════════════════════════════════════════
-print("📊  Generating EDA charts …")
+print("Generating EDA charts ...")
 
 def save_chart(name):
     path = f'static/charts/{name}.png'
@@ -274,12 +274,12 @@ sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm',
 ax.set_title('Feature Correlation Matrix')
 save_chart('correlation_matrix')
 
-print("✅  All EDA charts saved to static/charts/")
+print("All EDA charts saved to static/charts/")
 
 # ════════════════════════════════════════════════════════════════════════════
 # 5. ADVANCED ANALYTICS
 # ════════════════════════════════════════════════════════════════════════════
-print("🔬  Running advanced analytics …")
+print("Running advanced analytics ...")
 
 # ── 5a. RFM Analysis ─────────────────────────────────────────────────────────
 ref_date = df['PurchaseDate'].max() + pd.Timedelta(days=1)
@@ -407,6 +407,18 @@ save_chart('peak_sales')
 # ════════════════════════════════════════════════════════════════════════════
 # 6. EXPORT ANALYTICS SUMMARY (for Flask API)
 # ════════════════════════════════════════════════════════════════════════════
+# ── Executive Summary Metrics ──────────────────────────────
+best_cat = df.groupby('ProductCategory')['TotalPrice'].sum().idxmax()
+best_prod = df.groupby('Product')['TotalPrice'].sum().idxmax()
+
+# Calculate MoM Growth
+growth = 0
+if len(monthly) >= 2:
+    last_rev = monthly['Revenue'].iloc[-1]
+    prev_rev = monthly['Revenue'].iloc[-2]
+    if prev_rev > 0:
+        growth = ((last_rev - prev_rev) / prev_rev) * 100
+
 summary = {
     'total_revenue'    : float(df['TotalPrice'].sum()),
     'total_orders'     : int(len(df)),
@@ -414,12 +426,9 @@ summary = {
     'total_products'   : int(df['Product'].nunique()),
     'avg_rating'       : float(df['ReviewRating'].mean()),
     'avg_order_value'  : float(df['AverageOrderValue'].mean()),
-    'best_product'     : str(df.groupby('Product')['TotalPrice'].sum().idxmax()),
-    'best_category'    : str(df.groupby('ProductCategory')['TotalPrice'].sum().idxmax()),
-    'monthly_growth'   : float(
-        (monthly['Revenue'].iloc[-1] - monthly['Revenue'].iloc[-2])
-        / monthly['Revenue'].iloc[-2] * 100
-        if len(monthly) >= 2 else 0),
+    'best_product'     : str(best_prod),
+    'best_category'    : str(best_cat),
+    'monthly_growth'   : float(growth),
     'forecast_30d'     : float(future_preds[1]),
     'forecast_60d'     : float(future_preds[2]),
     'forecast_90d'     : float(future_preds[3]),
@@ -469,8 +478,8 @@ forecast_json['Date'] = forecast_json['Date'].dt.strftime('%Y-%m-%d')
 with open('data/sales_forecast.json', 'w') as f:
     json.dump(forecast_json.to_dict(orient='records'), f, indent=2)
 
-print("✅  Analytics summary JSON files saved to data/")
-print("🎉  Preprocessing complete!\n")
+print("Analytics summary JSON files saved to data/")
+print("Preprocessing complete!\n")
 print(f"   Total Revenue   : ${summary['total_revenue']:,.2f}")
 print(f"   Total Orders    : {summary['total_orders']:,}")
 print(f"   Total Customers : {summary['total_customers']:,}")
